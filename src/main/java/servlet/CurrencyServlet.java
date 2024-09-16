@@ -1,0 +1,44 @@
+package servlet;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dto.CurrencyDto;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import service.CurrencyService;
+
+import java.io.IOException;
+
+@WebServlet("/currency/*")
+public class CurrencyServlet extends HttpServlet {
+    private final CurrencyService currencyService = CurrencyService.getInstance();
+
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String pathInfo = req.getPathInfo();
+        try {
+            if (pathInfo != null && pathInfo.length() > 1) {
+                String currencyCode = pathInfo.substring(1);
+                resp.setContentType("application/json");
+                CurrencyDto currency = currencyService.findByCode(currencyCode);
+                if (currency == null){
+                    resp.sendError(404, "not found");
+                }
+                else {
+                    resp.getWriter().write(new ObjectMapper().writeValueAsString(currency));
+
+                    resp.setStatus(200);
+                }
+            } else {
+                resp.sendError(400, "Currency code is missing.");
+            }
+        }
+        catch (Exception e){
+            resp.sendError(500, "Error");
+        }
+
+
+    }
+}
