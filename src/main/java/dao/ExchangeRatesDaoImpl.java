@@ -3,6 +3,7 @@ package dao;
 import dto.CurrencyDto;
 import dto.ExchangeRatesDto;
 import entity.Currency;
+import entity.ExchangeRates;
 import exception.UniqueException;
 import service.CurrencyService;
 import utils.ConnectionManager;
@@ -12,16 +13,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ExchangeRatesDaoImpl implements ExchangeRatesDao{
 
     private final String FIND_ALL_SQL = "select  * from exchangerates";
-    private final String FIND_BU_ID_CODES_SQL = """
-            SELECT * FROM exchangerates WHERE (basecurrencyid = ? AND targetcurrencyid = ?);
-            """;
+    private final String FIND_BU_ID_CODES_SQL = "SELECT * FROM exchangerates WHERE (basecurrencyid = ? AND targetcurrencyid = ?)";
 
     private final String SAVE_SQL = "insert into exchangerates(basecurrencyid, targetcurrencyid, rate) VALUES (?, ? , ?)";
+    private final String UPDATE_SQl = "update exchangerates set rate = ? where id = ?";
+
+
     public final static ExchangeRatesDaoImpl INSTANCE = new ExchangeRatesDaoImpl();
     private final CurrencyService currencyService = CurrencyService.getInstance();
 
@@ -53,7 +57,7 @@ public class ExchangeRatesDaoImpl implements ExchangeRatesDao{
     }
 
     @Override
-    public ExchangeRatesDto findByIdCodes(long firstId, long secondId) {
+    public Map<ExchangeRatesDto, Long> findByIdCodes(long firstId, long secondId) {
         try(Connection connection = ConnectionManager.get();
             var statement = connection.prepareStatement(FIND_BU_ID_CODES_SQL)) {
             statement.setLong(1, firstId);
@@ -62,9 +66,12 @@ public class ExchangeRatesDaoImpl implements ExchangeRatesDao{
             if (result.next()){
                 CurrencyDto bCur = currencyService.findById(result.getLong("basecurrencyid"));
                 CurrencyDto tCur = currencyService.findById(result.getLong("targetcurrencyid"));
-                return ExchangeRatesDto.builder().baseCurrency(bCur).targetCurrency(tCur).rate(result.getDouble("rate")).build();
+                HashMap<ExchangeRatesDto, Long> map = new HashMap<>();
+                System.out.println(result.getLong("id"));
+
+                map.put(ExchangeRatesDto.builder().baseCurrency(bCur).targetCurrency(tCur).rate(result.getDouble("rate")).build(), result.getLong("id"));
+                return map;
             }
-            // todo throw
             return null;
 
         } catch (SQLException e) {
@@ -86,6 +93,25 @@ public class ExchangeRatesDaoImpl implements ExchangeRatesDao{
             throw new UniqueException(e);
         }
         return null;
+    }
+
+    @Override
+    public ExchangeRatesDto changeRate( Map<ExchangeRatesDto, Long> data, Double rate) {
+        try (Connection connection = ConnectionManager.get();
+            var statement = connection.prepareStatement(UPDATE_SQl)){
+            ExchangeRatesDto ratesDto = data.keySet().stream().findFirst().get();
+            statement.setDouble(1, rate);
+            statement.setLong(2, data.get(ratesDto));
+            statement.executeUpdate();
+            return ExchangeRatesDto
+                    .builder()
+                    .rate(rate)
+                    .baseCurrency(ratesDto.baseCurrency())
+                    .targetCurrency(ratesDto.targetCurrency()).build();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
