@@ -103,7 +103,20 @@ public class ExchangeRatesService {
         if (reverseMap != null){
             return convertMapToExchangeDto(reverseMap, amount, true);
         }
-        return null;
+        Currency usdCur = currencyService.findByCodeWithId("USD");
+        if (usdCur != null){
+            var usdExToTarget = exchange("USD", targetCurCode, amount);
+            var usdExToBase = exchange("USD", baseCurCode, amount);
+            Double rate = usdExToBase.rate() / usdExToTarget.rate();
+            return ExchangeDto
+                    .builder()
+                    .convertedAmount(BigDecimal.valueOf(rate * amount))
+                    .rate(rate)
+                    .baseCurrency(usdExToBase.targetCurrency())
+                    .targetCurrency(usdExToBase.baseCurrency())
+                    .build();
+        }
+        throw new NotFoundException();
 
 
     }
