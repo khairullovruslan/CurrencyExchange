@@ -3,11 +3,13 @@ package service;
 import dao.ExchangeRatesDao;
 import dao.ExchangeRatesDaoImpl;
 import dto.CurrencyDto;
+import dto.ExchangeDto;
 import dto.ExchangeRatesDto;
 import entity.Currency;
-import entity.ExchangeRates;
 import exception.NotFoundException;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -86,5 +88,35 @@ public class ExchangeRatesService {
         }
         return exchangeRatesDao.changeRate(exchangeRatesDao.findByIdCodes(id[0], id[1]), rate);
 
+    }
+
+
+    public ExchangeDto exchange(String baseCurCode, String targetCurCode, Double amount) {
+        Currency baseCur = currencyService.findByCodeWithId(baseCurCode);
+        Currency targetCur = currencyService.findByCodeWithId(targetCurCode);
+        if(baseCur == null || targetCur == null) throw new NotFoundException();
+        var map = exchangeRatesDao.findByIdCodes(baseCur.getId(), targetCur.getId());
+        if (map != null){
+            return convertMapToExchangeDto(map, amount, false);
+        }
+        var reverseMap = exchangeRatesDao.findByIdCodes(targetCur.getId(), baseCur.getId());
+        if (reverseMap != null){
+            return convertMapToExchangeDto(reverseMap, amount, true);
+        }
+        return null;
+
+
+    }
+
+    private ExchangeDto convertMapToExchangeDto(Map<ExchangeRatesDto, Long> map, Double amount, boolean reverse){
+        ExchangeRatesDto exchangeDto = map.keySet().stream().findFirst().get();
+        return ExchangeDto
+                .builder()
+                .baseCurrency(!reverse ? exchangeDto.baseCurrency() : exchangeDto.targetCurrency())
+                .targetCurrency(!reverse ? exchangeDto.targetCurrency() : exchangeDto.baseCurrency())
+                .amount(amount)
+                .rate(!reverse ? exchangeDto.rate() : 1 / exchangeDto.rate())
+                .convertedAmount(!reverse ? BigDecimal.valueOf(exchangeDto.rate() * amount) : BigDecimal.valueOf((1 / exchangeDto.rate()) * amount) )
+                .build();
     }
 }

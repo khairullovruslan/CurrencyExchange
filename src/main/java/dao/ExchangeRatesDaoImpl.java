@@ -2,8 +2,6 @@ package dao;
 
 import dto.CurrencyDto;
 import dto.ExchangeRatesDto;
-import entity.Currency;
-import entity.ExchangeRates;
 import exception.UniqueException;
 import service.CurrencyService;
 import utils.ConnectionManager;

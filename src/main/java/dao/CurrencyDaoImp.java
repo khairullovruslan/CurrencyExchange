@@ -4,10 +4,9 @@ import dto.CurrencyDto;
 import entity.Currency;
 import exception.UniqueException;
 import utils.ConnectionManager;
-
+import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
