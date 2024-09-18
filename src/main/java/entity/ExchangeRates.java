@@ -7,7 +7,7 @@ import lombok.Data;
 @Builder
 public class ExchangeRates {
     private Long id;
-    private int baseCurrencyId;
-    private int targetCurrencyId;
+    private Currency baseCurrency;
+    private Currency targetCurrency;
     private double rate;
 }
