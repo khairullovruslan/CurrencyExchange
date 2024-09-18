@@ -4,10 +4,13 @@ import dao.CurrencyDao;
 import dao.CurrencyDaoImp;
 import dto.CurrencyDto;
 import entity.Currency;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.convention.MatchingStrategies;
 
 import java.util.List;
 
 public final class CurrencyService {
+    private final static ModelMapper mapper;
     private final static CurrencyService INSTANCE = new CurrencyService();
     private final CurrencyDao currencyDao = CurrencyDaoImp.getInstance();
 
@@ -15,18 +18,34 @@ public final class CurrencyService {
         return INSTANCE;
     }
 
+    static {
+        mapper = new ModelMapper();
+
+        mapper.getConfiguration()
+                .setMatchingStrategy(MatchingStrategies.STRICT);
+
+
+    }
+
     private CurrencyService(){
 
     }
 
     public List<CurrencyDto> findAll(){
-        return currencyDao.findAll();
+        return currencyDao.findAll().stream().map(s -> mapper.map(s, CurrencyDto.class)).toList();
     }
 
-    public CurrencyDto findByCode(String currencyCode) {return currencyDao.findByCode(currencyCode);}
-    public CurrencyDto findById(long id) {return currencyDao.findById(id);}
-    public Currency save(Currency currency){return currencyDao.save(currency);}
-    public List<Currency> findByLikeCode(String c){return currencyDao.findByLikeCode(c);}
+    public CurrencyDto findByCode(String currencyCode) {
+        return mapper.map(currencyDao.findByCode(currencyCode), CurrencyDto.class);
 
-    public Currency findByCodeWithId(String secondCode) {return currencyDao.findByCodeWithId(secondCode);}
+    }
+    public CurrencyDto findById(long id) {
+        return mapper.map(currencyDao.findById(id), CurrencyDto.class);
+    }
+    public Currency save(Currency currency){return currencyDao.save(currency);}
+
+    public List<CurrencyDto> findByLikeCode(String c){
+        return currencyDao.findByLikeCode(c).stream().map(s -> mapper.map(s, CurrencyDto.class)).toList();
+    }
+
 }

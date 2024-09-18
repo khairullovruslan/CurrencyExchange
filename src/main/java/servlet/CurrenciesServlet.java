@@ -36,22 +36,26 @@ public class CurrenciesServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("application/json");
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(req.getInputStream()))) {
-            StringBuilder json = new StringBuilder();
-            while (reader.ready()){
-                json.append(reader.readLine());
-            }
-            Currency currency = new ObjectMapper().readValue(json.toString(), Currency.class);
-            if (currency.getCode() == null || currency.getSign() == null || currency.getFullName() == null){
-                resp.sendError(400, "A required form field is missing");
-            }
-            else {
-                Currency res = currencyService.save(currency);
-                resp.getWriter().write(new ObjectMapper().writeValueAsString(res));
-                resp.setStatus(201, "success");
-            }
 
+        String name = req.getParameter("name");
+        String code= req.getParameter("code");
+        String sign = req.getParameter("sign");
+
+        if (name == null || code == null || sign == null){
+            resp.sendError(400, "A required form field is missing");
+            return;
         }
+        try {
+            Currency res = currencyService.save(Currency
+                    .builder()
+                    .code(code)
+                    .sign(sign)
+                    .fullName(name)
+                    .build());
+            resp.getWriter().write(new ObjectMapper().writeValueAsString(res));
+            resp.setStatus(HttpServletResponse.SC_OK);
+        }
+
         catch (UniqueException e){
             resp.sendError(409, "A currency with this code already exists.");
         }
