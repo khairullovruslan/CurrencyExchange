@@ -5,12 +5,10 @@ import lombok.*;
 
 import java.util.Objects;
 
-@Getter
-@Setter
+
 @Builder
-@NoArgsConstructor
-@ToString
 @AllArgsConstructor
+@Getter
 public class Currency {
     private Long id;
     private String code;
