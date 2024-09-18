@@ -8,6 +8,7 @@ import java.util.Objects;
 
 @Builder
 @AllArgsConstructor
+@Setter
 @Getter
 public class Currency {
     private Long id;
