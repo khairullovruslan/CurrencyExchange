@@ -1,8 +1,17 @@
 package dto;
 
-import lombok.Builder;
+import lombok.*;
 
 @Builder
-public record CurrencyDto( String code, String fullName, String sign) {
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@Getter
+@Setter
+public class CurrencyDto{
+    private String code;
+    private String fullName;
+    private String sign;
+
 
 }
