@@ -2,6 +2,7 @@ package dao;
 
 import dto.CurrencyDto;
 import dto.ExchangeRatesDto;
+import entity.ExchangeRates;
 import exception.UniqueException;
 import service.CurrencyService;
 import utils.ConnectionManager;
@@ -37,6 +38,11 @@ public class ExchangeRatesDaoImpl implements ExchangeRatesDao{
 
 
     @Override
+    public ExchangeRates findById(Long id) {
+        return null;
+    }
+
+    @Override
     public List<ExchangeRatesDto> findAll() {
         try(Connection con = ConnectionManager.get();
             var statement = con.prepareStatement(FIND_ALL_SQL)) {
@@ -52,6 +58,21 @@ public class ExchangeRatesDaoImpl implements ExchangeRatesDao{
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public ExchangeRates save(ExchangeRates entity) {
+        return null;
+    }
+
+    @Override
+    public ExchangeRates update(ExchangeRates entity) {
+        return null;
+    }
+
+    @Override
+    public void delete(Long id) {
+
     }
 
     @Override

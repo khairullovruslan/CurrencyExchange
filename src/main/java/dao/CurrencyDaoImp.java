@@ -38,14 +38,15 @@ public class CurrencyDaoImp implements CurrencyDao{
 
 
     @Override
-    public List<CurrencyDto> findAll() {
+    public List<Currency> findAll() {
         try(var connection = ConnectionManager.get();
             var statement = connection.prepareStatement(FIND_ALL_SQL)) {
             ResultSet result = statement.executeQuery();
-            ArrayList<CurrencyDto> currencies = new ArrayList<>();
+            ArrayList<Currency> currencies = new ArrayList<>();
             while (result.next()){
-                currencies.add(CurrencyDto
+                currencies.add(Currency
                         .builder()
+                        .id(result.getLong("id"))
                         .sign(result.getString("sign"))
                         .code(result.getString("code"))
                         .fullName(result.getString("full_name")).build());
@@ -58,14 +59,15 @@ public class CurrencyDaoImp implements CurrencyDao{
     }
 
     @Override
-    public CurrencyDto findByCode(String currencyCode) {
+    public Currency findByCode(String currencyCode) {
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(FIND_BY_CODE_SQL)) {
             statement.setString(1, currencyCode);
             var result = statement.executeQuery();
             if (result.next()){
-                return CurrencyDto
+                return Currency
                         .builder()
+                        .id(result.getLong("id"))
                         .sign(result.getString("sign"))
                         .fullName(result.getString("full_name"))
                         .code(result.getString("code")).build();
@@ -77,27 +79,6 @@ public class CurrencyDaoImp implements CurrencyDao{
         return null;
     }
 
-    @Override
-    public Currency findByCodeWithId(String currencyCode) {
-        try (var connection = ConnectionManager.get();
-             var statement = connection.prepareStatement(FIND_BY_CODE_SQL)) {
-            statement.setString(1, currencyCode);
-            var result = statement.executeQuery();
-            if (result.next()){
-                return Currency
-                        .builder()
-                        .sign(result.getString("sign"))
-                        .fullName(result.getString("full_name"))
-                        .code(result.getString("code"))
-                        .id(result.getLong("id"))
-                        .build();
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return null;
-    }
 
     @Override
     public Currency save(Currency currency) {
@@ -122,14 +103,26 @@ public class CurrencyDaoImp implements CurrencyDao{
     }
 
     @Override
-    public CurrencyDto findById(long id) {
+    public Currency update(Currency entity) {
+        return null;
+    }
+
+    @Override
+    public void delete(Long id) {
+
+    }
+
+
+    @Override
+    public Currency findById(Long id) {
         try (var connection = ConnectionManager.get();
         var statement = connection.prepareStatement(FIND_BY_ID_SQL)) {
             statement.setLong(1, id);
             var result = statement.executeQuery();
             if (result.next()){
-                return CurrencyDto
+                return Currency
                         .builder()
+                        .id(result.getLong("id"))
                         .sign(result.getString("sign"))
                         .fullName(result.getString("full_name"))
                         .code(result.getString("code")).build();
