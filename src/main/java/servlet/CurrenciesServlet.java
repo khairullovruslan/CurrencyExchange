@@ -8,8 +8,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import service.CurrencyService;
+
 import java.io.IOException;
 import java.util.List;
+
 import entity.Currency;
 
 
@@ -34,14 +36,14 @@ public class CurrenciesServlet extends HttpServlet {
         resp.setContentType("application/json");
 
         String name = req.getParameter("name");
-        String code= req.getParameter("code");
+        String code = req.getParameter("code");
         String sign = req.getParameter("sign");
 
-        if (name == null || code == null || sign == null){
+        if (name == null || code == null || sign == null) {
             resp.sendError(400, "A required form field is missing");
             return;
         }
-        if (code.length() != 3){
+        if (code.length() != 3) {
             resp.sendError(400, "The code must consist of three letters or numbers");
         }
         try {
@@ -54,12 +56,9 @@ public class CurrenciesServlet extends HttpServlet {
 
             resp.getWriter().write(new ObjectMapper().writeValueAsString(res));
             resp.setStatus(HttpServletResponse.SC_OK);
-        }
-
-        catch (UniqueException e){
+        } catch (UniqueException e) {
             resp.sendError(409, "A currency with this code already exists.");
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             resp.sendError(500, "Error");
         }
 
