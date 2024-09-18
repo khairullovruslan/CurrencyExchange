@@ -15,8 +15,9 @@ public class CurrencyDaoImp implements CurrencyDao{
     private final String FIND_ALL_SQL = "select * from  Currencies";
     private final String FIND_BY_CODE_SQL = "select * from  Currencies where code = ?";
     private final String SAVE_SQL = "insert into currencies(code, full_name, sign)" +
-                                    "values (?, ? , ?)";
+            "values (?, ? , ?)";
     private final String FIND_BY_ID_SQL = "select * from  Currencies where id = ?";
+    private final String FIND_BY_CODE_LIKE_SQL = "select * from  Currencies where code like ? ";
 
 
     private final static CurrencyDao INSTANCE = new CurrencyDaoImp();
@@ -117,7 +118,7 @@ public class CurrencyDaoImp implements CurrencyDao{
     @Override
     public Optional<Currency> findById(Long id) {
         try (var connection = ConnectionManager.get();
-        var statement = connection.prepareStatement(FIND_BY_ID_SQL)) {
+             var statement = connection.prepareStatement(FIND_BY_ID_SQL)) {
             statement.setLong(1, id);
             List<Currency> currencies = convertResultSetToList(statement.executeQuery());
             return Optional.ofNullable(currencies.size() == 1 ? currencies.get(0) : null);
@@ -127,6 +128,16 @@ public class CurrencyDaoImp implements CurrencyDao{
         }
     }
 
-
+    @Override
+    public List<Currency> findByLikeCode(String c) {
+        try (var con = ConnectionManager.get();
+             var statement = con.prepareStatement(FIND_BY_CODE_LIKE_SQL)){
+            String pattern = c + "%";
+            statement.setString(1, pattern);
+            return convertResultSetToList(statement.executeQuery());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }
