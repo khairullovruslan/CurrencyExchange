@@ -5,130 +5,74 @@ import dao.ExchangeRatesDaoImpl;
 import dto.CurrencyDto;
 import dto.ExchangeDto;
 import dto.ExchangeRatesDto;
-import entity.Currency;
+import entity.ExchangeRates;
+import exception.DaoException;
 import exception.NotFoundException;
+import org.modelmapper.ModelMapper;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 public class ExchangeRatesService {
     private final static ExchangeRatesService INSTANCE = new ExchangeRatesService();
     private final ExchangeRatesDao exchangeRatesDao = ExchangeRatesDaoImpl.getInstance();
+
     public static ExchangeRatesService getInstance() {
         return INSTANCE;
     }
+
+    private final ModelMapper mapper = new ModelMapper();
     private final CurrencyService currencyService = CurrencyService.getInstance();
 
-    private ExchangeRatesService(){}
-
-    public List<ExchangeRatesDto> findAll(){
-        return exchangeRatesDao.findAll();
+    private ExchangeRatesService() {
     }
 
-    private long[] splitCodes(String exCode){
-        List<Currency> curList = currencyService.findByLikeCode(String.valueOf(exCode.charAt(0)));
-        long[] id = new long[2];
-        for (Currency currency: curList){
-            if (exCode.contains(currency.getCode())){
-                int ind = exCode.indexOf(currency.getCode());
-                String secondCode;
-                if (ind == 0){
-                    secondCode = exCode.substring(currency.getCode().length());
-                }
-                else {
-                    secondCode = exCode.substring(0, currency.getCode().length());
-                }
-                return new long[]{currency.getId(), currencyService.findByCodeWithId(secondCode).getId()};
-            }
-        }
-        return null;
+    public List<ExchangeRatesDto> findAll() {
+        return exchangeRatesDao.findAll().stream().map(s -> mapper.map(s, ExchangeRatesDto.class)).toList();
     }
 
-    public ExchangeRatesDto findByIdCodes(String exCode) {
-        long[] id = splitCodes(exCode);
-        if (id == null || id.length != 2){
-            throw new NotFoundException();
-        }
-        var res = exchangeRatesDao.findByIdCodes(id[0], id[1]);
-        return res.keySet().stream().findFirst().get();
+
+    public ExchangeRatesDto findByCodes(String exCode) {
+        var res = exchangeRatesDao.findByCodes(exCode.substring(0, 3), exCode.substring(3, 6));
+        if (res.isPresent()) return mapper.map(res.get(), ExchangeRatesDto.class);
+        throw new NotFoundException();
     }
-    public ExchangeRatesDto saveNewExchange(String baseCurrencyCode, String targetCurrencyCode, Double rate){
-        Currency baseCur = currencyService.findByCodeWithId(baseCurrencyCode);
-        Currency targetCur = currencyService.findByCodeWithId(targetCurrencyCode);
-        if (baseCur == null ||targetCur == null) throw new NotFoundException();
 
-        exchangeRatesDao.save(baseCur.getId(), targetCur.getId(), rate);
-        return ExchangeRatesDto
-                .builder()
-                .baseCurrency(
-                        CurrencyDto
-                                .builder()
-                                .sign(baseCur.getSign())
-                                .fullName(baseCur.getFullName())
-                                .code(baseCur.getCode())
-                                .build())
-                .targetCurrency(
-                        CurrencyDto
-                                .builder()
-                                .sign(targetCur.getSign())
-                                .fullName(targetCur.getFullName())
-                                .code(targetCur.getCode())
-                                .build())
-                .rate(rate)
-                .build();
-
+    public ExchangeRatesDto saveNewExchange(String baseCurrencyCode, String targetCurrencyCode, Double rate) {
+        Optional<ExchangeRates> exchangeRates = exchangeRatesDao.save(baseCurrencyCode, targetCurrencyCode, rate);
+        if (exchangeRates.isPresent()) return mapper.map(exchangeRates.get(), ExchangeRatesDto.class);
+        throw new DaoException();
     }
 
     public ExchangeRatesDto changeRate(String exCode, Double rate) {
-        long[] id = splitCodes(exCode);
-        if (id == null || id.length != 2){
-            throw new NotFoundException();
-        }
-        return exchangeRatesDao.changeRate(exchangeRatesDao.findByIdCodes(id[0], id[1]), rate);
+
+        Optional<ExchangeRates> exchangeRates = exchangeRatesDao.changeRate(exCode.substring(0, 3), exCode.substring(3, 6), rate);
+        if (exchangeRates.isPresent()) return mapper.map(exchangeRates.get(), ExchangeRatesDto.class);
+        throw new NotFoundException();
 
     }
 
 
     public ExchangeDto exchange(String baseCurCode, String targetCurCode, Double amount) {
-        Currency baseCur = currencyService.findByCodeWithId(baseCurCode);
-        Currency targetCur = currencyService.findByCodeWithId(targetCurCode);
-        if(baseCur == null || targetCur == null) throw new NotFoundException();
-        var map = exchangeRatesDao.findByIdCodes(baseCur.getId(), targetCur.getId());
-        if (map != null){
-            return convertMapToExchangeDto(map, amount, false);
-        }
-        var reverseMap = exchangeRatesDao.findByIdCodes(targetCur.getId(), baseCur.getId());
-        if (reverseMap != null){
-            return convertMapToExchangeDto(reverseMap, amount, true);
-        }
-        Currency usdCur = currencyService.findByCodeWithId("USD");
-        if (usdCur != null){
-            var usdExToTarget = exchange("USD", targetCurCode, amount);
-            var usdExToBase = exchange("USD", baseCurCode, amount);
-            Double rate = usdExToBase.rate() / usdExToTarget.rate();
-            return ExchangeDto
-                    .builder()
-                    .convertedAmount(BigDecimal.valueOf(rate * amount))
-                    .rate(rate)
-                    .baseCurrency(usdExToBase.targetCurrency())
-                    .targetCurrency(usdExToBase.baseCurrency())
-                    .build();
+        Optional<ExchangeRates> res = exchangeRatesDao.findByCodesAndReverse(baseCurCode, targetCurCode);
+        if (res.isPresent()) {
+            ExchangeRates exchangeRates = res.get();
+            return convertExchangeRatesToExchangeDto(exchangeRates, amount, !exchangeRates.getBaseCurrency().getCode().equals(baseCurCode));
         }
         throw new NotFoundException();
-
-
     }
 
-    private ExchangeDto convertMapToExchangeDto(Map<ExchangeRatesDto, Long> map, Double amount, boolean reverse){
-        ExchangeRatesDto exchangeDto = map.keySet().stream().findFirst().get();
+    private ExchangeDto convertExchangeRatesToExchangeDto(ExchangeRates exchangeRates, Double amount, boolean reverse) {
         return ExchangeDto
                 .builder()
-                .baseCurrency(!reverse ? exchangeDto.baseCurrency() : exchangeDto.targetCurrency())
-                .targetCurrency(!reverse ? exchangeDto.targetCurrency() : exchangeDto.baseCurrency())
+                .baseCurrency(!reverse ? mapper.map(exchangeRates.getBaseCurrency(), CurrencyDto.class)
+                        : mapper.map(exchangeRates.getTargetCurrency(), CurrencyDto.class))
+                .targetCurrency(!reverse ? mapper.map(exchangeRates.getTargetCurrency(), CurrencyDto.class)
+                        : mapper.map(exchangeRates.getBaseCurrency(), CurrencyDto.class))
                 .amount(amount)
-                .rate(!reverse ? exchangeDto.rate() : 1 / exchangeDto.rate())
-                .convertedAmount(!reverse ? BigDecimal.valueOf(exchangeDto.rate() * amount) : BigDecimal.valueOf((1 / exchangeDto.rate()) * amount) )
+                .rate(!reverse ? exchangeRates.getRate() : 1 / exchangeRates.getRate())
+                .convertedAmount(!reverse ? BigDecimal.valueOf(exchangeRates.getRate() * amount) : BigDecimal.valueOf((1 / exchangeRates.getRate()) * amount))
                 .build();
     }
 }
