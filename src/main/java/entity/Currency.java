@@ -10,6 +10,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @Setter
 @Getter
+@ToString
 public class Currency {
     private Long id;
     private String code;
