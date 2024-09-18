@@ -8,7 +8,7 @@ import lombok.*;
 @ToString
 @Getter
 @Setter
-public class CurrencyDto{
+public class CurrencyDto {
     private String code;
     private String fullName;
     private String sign;
