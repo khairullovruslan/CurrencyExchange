@@ -23,11 +23,11 @@ public final class CurrencyService {
         mapper = new ModelMapper();
     }
 
-    private CurrencyService(){
+    private CurrencyService() {
 
     }
 
-    public List<CurrencyDto> findAll(){
+    public List<CurrencyDto> findAll() {
         return currencyDao.findAll().stream().map(s -> mapper.map(s, CurrencyDto.class)).toList();
     }
 
@@ -38,7 +38,7 @@ public final class CurrencyService {
 
     }
 
-    public Currency save(CurrencyDto currency){
+    public Currency save(CurrencyDto currency) {
         return currencyDao.save(mapper.map(currency, Currency.class));
     }
 
