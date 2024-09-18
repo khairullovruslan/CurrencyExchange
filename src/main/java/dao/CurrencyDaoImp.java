@@ -1,7 +1,7 @@
 package dao;
 
-import dto.CurrencyDto;
 import entity.Currency;
+import exception.DaoException;
 import exception.UniqueException;
 import utils.ConnectionManager;
 import java.sql.Statement;
@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class CurrencyDaoImp implements CurrencyDao{
     private final String FIND_ALL_SQL = "select * from  Currencies";
@@ -22,36 +23,42 @@ public class CurrencyDaoImp implements CurrencyDao{
     private final static CurrencyDao INSTANCE = new CurrencyDaoImp();
 
     public static CurrencyDao getInstance() {
+
         return INSTANCE;
     }
+
     private CurrencyDaoImp(){
+
     }
 
     static {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
             throw new RuntimeException("Failed to load PostgreSQL JDBC driver", e);
         }
     }
+
+    private List<Currency> convertResultSetToList(ResultSet result) throws SQLException {
+        ArrayList<Currency> currencies = new ArrayList<>();
+        while (result.next()){
+            currencies.add(Currency
+                    .builder()
+                    .id(result.getLong("id"))
+                    .sign(result.getString("sign"))
+                    .code(result.getString("code"))
+                    .fullName(result.getString("full_name")).build());
+        }
+        return currencies;
+    }
+
 
 
     @Override
     public List<Currency> findAll() {
         try(var connection = ConnectionManager.get();
             var statement = connection.prepareStatement(FIND_ALL_SQL)) {
-            ResultSet result = statement.executeQuery();
-            ArrayList<Currency> currencies = new ArrayList<>();
-            while (result.next()){
-                currencies.add(Currency
-                        .builder()
-                        .id(result.getLong("id"))
-                        .sign(result.getString("sign"))
-                        .code(result.getString("code"))
-                        .fullName(result.getString("full_name")).build());
-            }
-            return currencies;
+            return convertResultSetToList(statement.executeQuery());
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -59,24 +66,17 @@ public class CurrencyDaoImp implements CurrencyDao{
     }
 
     @Override
-    public Currency findByCode(String currencyCode) {
+    public Optional<Currency> findByCode(String currencyCode) {
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(FIND_BY_CODE_SQL)) {
             statement.setString(1, currencyCode);
             var result = statement.executeQuery();
-            if (result.next()){
-                return Currency
-                        .builder()
-                        .id(result.getLong("id"))
-                        .sign(result.getString("sign"))
-                        .fullName(result.getString("full_name"))
-                        .code(result.getString("code")).build();
-            }
+            List<Currency> currencies = convertResultSetToList(result);
+            return Optional.ofNullable(currencies.size() == 1 ? currencies.get(0) : null);
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return null;
     }
 
 
@@ -93,7 +93,7 @@ public class CurrencyDaoImp implements CurrencyDao{
                 currency.setId(keys.getLong("id"));
                 return currency;
             }
-            throw new RuntimeException();
+            throw new DaoException();
 
 
 
@@ -102,11 +102,13 @@ public class CurrencyDaoImp implements CurrencyDao{
         }
     }
 
+    // todo impl
     @Override
     public Currency update(Currency entity) {
         return null;
     }
 
+    // todo impl
     @Override
     public void delete(Long id) {
 
@@ -114,24 +116,16 @@ public class CurrencyDaoImp implements CurrencyDao{
 
 
     @Override
-    public Currency findById(Long id) {
+    public Optional<Currency> findById(Long id) {
         try (var connection = ConnectionManager.get();
         var statement = connection.prepareStatement(FIND_BY_ID_SQL)) {
             statement.setLong(1, id);
-            var result = statement.executeQuery();
-            if (result.next()){
-                return Currency
-                        .builder()
-                        .id(result.getLong("id"))
-                        .sign(result.getString("sign"))
-                        .fullName(result.getString("full_name"))
-                        .code(result.getString("code")).build();
-            }
+            List<Currency> currencies = convertResultSetToList(statement.executeQuery());
+            return Optional.ofNullable(currencies.size() == 1 ? currencies.get(0) : null);
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return null;
     }
 
     @Override
@@ -140,17 +134,7 @@ public class CurrencyDaoImp implements CurrencyDao{
             var statement = con.prepareStatement(FIND_BY_CODE_LIKE_SQL)){
             String pattern = c + "%";
             statement.setString(1, pattern);
-            var result = statement.executeQuery();
-            List<Currency> cur = new ArrayList<>();
-            while (result.next()){
-                cur.add(Currency
-                        .builder()
-                        .id(result.getLong("id"))
-                        .sign(result.getString("sign"))
-                        .code(result.getString("code"))
-                        .fullName(result.getString("full_name")).build());
-            }
-            return cur;
+            return convertResultSetToList(statement.executeQuery());
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
