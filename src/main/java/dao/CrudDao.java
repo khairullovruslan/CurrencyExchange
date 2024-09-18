@@ -1,9 +1,12 @@
 package dao;
 
+import entity.Currency;
+
 import java.util.List;
+import java.util.Optional;
 
 public interface CrudDao<T> {
-    T findById(Long id);
+    Optional<Currency> findById(Long id);
 
     List<T> findAll();
 
