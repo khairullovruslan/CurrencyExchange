@@ -3,7 +3,6 @@ package dao;
 import entity.Currency;
 import entity.ExchangeRates;
 import exception.UniqueException;
-import service.CurrencyService;
 import utils.ConnectionManager;
 
 import java.sql.Connection;
@@ -198,7 +197,7 @@ public class ExchangeRatesDaoImpl implements ExchangeRatesDao{
 
     // todo impl
     @Override
-    public Optional<ExchangeRates> findById(Long id) {
+    public Optional<Currency> findById(Long id) {
         return null;
     }
 
