@@ -46,12 +46,13 @@ public class CurrenciesServlet extends HttpServlet {
             return;
         }
         try {
-            Currency res = currencyService.save(Currency
+            Currency res = currencyService.save(CurrencyDto
                     .builder()
                     .code(code)
                     .sign(sign)
                     .fullName(name)
                     .build());
+
             resp.getWriter().write(new ObjectMapper().writeValueAsString(res));
             resp.setStatus(HttpServletResponse.SC_OK);
         }
