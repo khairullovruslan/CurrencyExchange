@@ -8,9 +8,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import service.CurrencyService;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.List;
 import entity.Currency;
 
@@ -28,9 +26,7 @@ public class CurrenciesServlet extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_OK);
         } catch (Exception e) {
             resp.sendError(500, "Error");
-
         }
-
     }
 
     @Override
@@ -44,6 +40,9 @@ public class CurrenciesServlet extends HttpServlet {
         if (name == null || code == null || sign == null){
             resp.sendError(400, "A required form field is missing");
             return;
+        }
+        if (code.length() != 3){
+            resp.sendError(400, "The code must consist of three letters or numbers");
         }
         try {
             Currency res = currencyService.save(CurrencyDto
@@ -60,8 +59,9 @@ public class CurrenciesServlet extends HttpServlet {
         catch (UniqueException e){
             resp.sendError(409, "A currency with this code already exists.");
         }
-        catch (Exception e) {
+        catch (Exception e){
             resp.sendError(500, "Error");
         }
+
     }
 }
