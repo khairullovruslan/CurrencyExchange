@@ -42,7 +42,11 @@ public final class CurrencyService {
     public CurrencyDto findById(long id) {
         return mapper.map(currencyDao.findById(id), CurrencyDto.class);
     }
-    public Currency save(Currency currency){return currencyDao.save(currency);}
+
+    //todo check if id field == null
+    public Currency save(CurrencyDto currency){
+        return currencyDao.save(mapper.map(currency, Currency.class));
+    }
 
     public List<CurrencyDto> findByLikeCode(String c){
         return currencyDao.findByLikeCode(c).stream().map(s -> mapper.map(s, CurrencyDto.class)).toList();
