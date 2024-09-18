@@ -7,13 +7,8 @@ import entity.ExchangeRates;
 import java.util.List;
 import java.util.Map;
 
-public interface ExchangeRatesDao {
-    List<ExchangeRatesDto> findAll();
+public interface ExchangeRatesDao extends CrudDao<ExchangeRates>{
 
-    Map<ExchangeRatesDto, Long> findByIdCodes(long firstId, long secondId);
-
-    Long save(long baseCur, long targetCur, Double rate);
-
-    ExchangeRatesDto changeRate( Map<ExchangeRatesDto, Long> data, Double rate);
+    Map<ExchangeRates, Long> findByIdCodes(long firstId, long secondId);
 
 }

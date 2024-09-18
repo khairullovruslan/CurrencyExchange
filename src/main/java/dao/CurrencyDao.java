@@ -5,14 +5,6 @@ import entity.Currency;
 
 import java.util.List;
 
-public interface CurrencyDao {
-    List<CurrencyDto> findAll();
+public interface CurrencyDao  extends CrudDao<Currency>{
 
-    CurrencyDto findByCode(String currencyCode);
-    Currency findByCodeWithId(String currencyCode);
-    Currency save(Currency currency);
-
-    CurrencyDto findById(long id);
-
-    List<Currency> findByLikeCode(String c);
 }
