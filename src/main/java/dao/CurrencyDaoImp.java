@@ -17,7 +17,6 @@ public class CurrencyDaoImp implements CurrencyDao{
     private final String SAVE_SQL = "insert into currencies(code, full_name, sign)" +
                                     "values (?, ? , ?)";
     private final String FIND_BY_ID_SQL = "select * from  Currencies where id = ?";
-    private final String FIND_BY_CODE_LIKE_SQL = "select * from  Currencies where code like ? ";
 
 
     private final static CurrencyDao INSTANCE = new CurrencyDaoImp();
@@ -128,16 +127,6 @@ public class CurrencyDaoImp implements CurrencyDao{
         }
     }
 
-    @Override
-    public List<Currency> findByLikeCode(String c) {
-        try (var con = ConnectionManager.get();
-            var statement = con.prepareStatement(FIND_BY_CODE_LIKE_SQL)){
-            String pattern = c + "%";
-            statement.setString(1, pattern);
-            return convertResultSetToList(statement.executeQuery());
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
+
 
 }
