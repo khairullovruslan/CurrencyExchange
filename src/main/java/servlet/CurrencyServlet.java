@@ -26,15 +26,12 @@ public class CurrencyServlet extends HttpServlet {
 
                 resp.setStatus(200);
 
-            }
-            else {
+            } else {
                 resp.sendError(400, "Currency code is missing.");
             }
-        }
-        catch (NotFoundException e){
+        } catch (NotFoundException e) {
             resp.sendError(404, "Currency not found");
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             resp.sendError(500, "Error");
         }
 
