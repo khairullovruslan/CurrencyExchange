@@ -2,6 +2,7 @@ package servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.CurrencyDto;
+import exception.NotFoundException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,17 +24,17 @@ public class CurrencyServlet extends HttpServlet {
                 String currencyCode = pathInfo.substring(1);
                 resp.setContentType("application/json");
                 CurrencyDto currency = currencyService.findByCode(currencyCode);
-                if (currency == null){
-                    resp.sendError(404, "not found");
-                }
-                else {
-                    resp.getWriter().write(new ObjectMapper().writeValueAsString(currency));
+                resp.getWriter().write(new ObjectMapper().writeValueAsString(currency));
 
-                    resp.setStatus(200);
-                }
-            } else {
+                resp.setStatus(200);
+
+            }
+            else {
                 resp.sendError(400, "Currency code is missing.");
             }
+        }
+        catch (NotFoundException e){
+            resp.sendError(404, "Currency not found");
         }
         catch (Exception e){
             resp.sendError(500, "Error");
