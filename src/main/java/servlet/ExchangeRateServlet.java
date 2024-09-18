@@ -13,7 +13,7 @@ import service.ExchangeRatesService;
 import java.io.IOException;
 
 @WebServlet("/exchangeRate/*")
-public class ExchangeRateServlet  extends HttpServlet {
+public class ExchangeRateServlet extends HttpServlet {
     private final ExchangeRatesService exchangeRatesService = ExchangeRatesService.getInstance();
 
     @Override
@@ -28,48 +28,45 @@ public class ExchangeRateServlet  extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
         try {
-            if (pathInfo != null && pathInfo.length() > 1) {
+            if (pathInfo != null && pathInfo.length() == 7) {
                 String exCode = pathInfo.substring(1);
-                ExchangeRatesDto currency = exchangeRatesService.findByIdCodes(exCode);
-                if (currency == null){
-                    resp.sendError(404, "Exchange rate for the pair not found");
-                }
-                else {
-                    resp.getWriter().write(new ObjectMapper().writeValueAsString(currency));
-                    resp.setStatus(200);
-                }
+                ExchangeRatesDto currency = exchangeRatesService.findByCodes(exCode);
+                resp.getWriter().write(new ObjectMapper().writeValueAsString(currency));
+                resp.setStatus(200);
 
-            }
-            else {
+            } else {
                 resp.sendError(400, "Pair currency codes are missing in the address");
             }
+        } catch (NotFoundException e) {
+            resp.sendError(404, "Exchange rate for the pair not found");
+        } catch (Exception e) {
+            resp.sendError(500, "Error");
         }
-        catch (Exception e){
-            resp.sendError(500, "error");
-        }
+
     }
 
-    protected void doPatch(HttpServletRequest req, HttpServletResponse resp)   throws IOException {
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
         String rate = req.getParameter("rate");
-        if (pathInfo == null || pathInfo.length() <= 1 || rate == null){
+        if (pathInfo == null || pathInfo.length() != 7 || rate == null) {
             resp.sendError(400, "The required form field is present");
             return;
         }
-
         String exCode = pathInfo.substring(1);
         try {
             ExchangeRatesDto exchangeRatesDto = exchangeRatesService.changeRate(exCode, Double.valueOf(rate));
             resp.getWriter().write(new ObjectMapper().writeValueAsString(exchangeRatesDto));
             resp.setStatus(200);
-        }
-        catch (NotFoundException e){
+        } catch (NotFoundException e) {
             resp.sendError(404, "The currency pair is missing from the database");
+        } catch (NumberFormatException e) {
+            resp.sendError(400, "A required form field is missing");
+        } catch (Exception e) {
+            resp.sendError(500, "Error");
         }
 
 
     }
-
 
 
 }
